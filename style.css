@@ -3,6 +3,8 @@
   line-height: 1.5;
   font-weight: 400;
 
+  box-sizing: border-box;
+
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: #242424;
@@ -35,11 +37,27 @@ h1 {
   line-height: 1.1;
 }
 
+label,
+input,
+button {
+  display: block;
+  margin: 0.5em 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+input {
+  height: 2.5em;
+}
+
 #app {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+}
+
+#section {
+  text-align: left;
 }
 
 .logo {
@@ -52,7 +70,7 @@ h1 {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
 .logo.vanilla:hover {
-  filter: drop-shadow(0 0 2em #f7df1eaa);
+  filter: drop-shadow(0 0 2em #3178c6aa);
 }
 
 .card {
@@ -80,6 +98,10 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+.flow-link {
+  background-color: transparent;
+  text-decoration: underline;
 }
 
 @media (prefers-color-scheme: light) {

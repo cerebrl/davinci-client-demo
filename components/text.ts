@@ -1,6 +1,6 @@
 import { SingleValueCollector } from '@forgerock/davinci-client/types';
 
-export default function usernameComponent(
+export default function textComponent(
   formEl: HTMLFormElement,
   collector: SingleValueCollector,
   updater: (value: string, index?: number) => void,

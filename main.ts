@@ -8,30 +8,32 @@ import passwordComponent from './components/password.js';
 import submitButtonComponent from './components/submit-button.js';
 import protect from './components/protect.js';
 import flowLinkComponent from './components/flow-link.js';
-import socialLoginButtonComponent from './components/social-login-button.js';
 
 const config = {
-  // clientId: '7544ef78-5c01-48c4-a9a5-6338c10c7f87',
-  clientId: '724ec718-c41c-4d51-98b0-84a583f450f9', // Luis' tenant
+  clientId: '724ec718-c41c-4d51-98b0-84a583f450f9',
   redirectUri: window.location.href,
   scope: 'openid profile email name revoke',
   serverConfig: {
-    // baseUrl: 'https://auth.pingone.com/c2a669c0-c396-4544-994d-9c6eb3fb1602/',
-    baseUrl: 'https://auth.pingone.ca/02fb4743-189a-4bc7-9d6c-a919edfe6447/', // Luis' tenant
+    baseUrl: 'https://auth.pingone.ca/02fb4743-189a-4bc7-9d6c-a919edfe6447/',
     wellknown:
       'https://auth.pingone.ca/02fb4743-189a-4bc7-9d6c-a919edfe6447/as/.well-known/openid-configuration',
   },
 };
 
 (async () => {
-  const davinciClient = await davinci({ config });
   const formEl = document.getElementById('form') as HTMLFormElement;
 
+  const davinciClient = await davinci({ config });
   await Config.setAsync(config);
 
+  davinciClient.subscribe(() => {
+    const node = davinciClient.getClient();
+    console.log('Event emitted from store:', node);
+  });
+
   function renderComplete() {
-    const clientInfo = davinciClient.getClientInfo();
-    const serverInfo = davinciClient.getServerInfo();
+    const clientInfo = davinciClient.getClient();
+    const serverInfo = davinciClient.getServer();
 
     let code = '';
     let session = '';
@@ -90,14 +92,11 @@ const config = {
     `;
   }
 
-  // Represents the main render function for app
   async function renderForm() {
     formEl.innerHTML = '';
-
-    const clientInfo = davinciClient.getClientInfo();
-    // const clientInfo = node.client;
-
     let formName = '';
+
+    const clientInfo = davinciClient.getClient();
 
     if (clientInfo?.status === 'next') {
       formName = clientInfo.name || '';
@@ -107,98 +106,63 @@ const config = {
     header.innerText = formName || '';
     formEl.appendChild(header);
 
-    const collectors = davinciClient.getCollectors();
+    const collectors: any = [];
     collectors.forEach((collector) => {
       if (collector.type === 'TextCollector' && collector.name === 'protectsdk') {
         protect(
-          formEl, // You can ignore this; it's just for rendering
-          collector, // This is the plain object of the collector
-          davinciClient.update(collector), // Returns an update function for this collector
+          formEl,
+          collector,
+          davinciClient.update(collector),
         );
       } else if (collector.type === 'TextCollector') {
         usernameComponent(
-          formEl, // You can ignore this; it's just for rendering
-          collector, // This is the plain object of the collector
-          davinciClient.update(collector), // Returns an update function for this collector
+          formEl,
+          collector,
+          davinciClient.update(collector),
         );
       } else if (collector.type === 'PasswordCollector') {
         passwordComponent(
-          formEl, // You can ignore this; it's just for rendering
-          collector, // This is the plain object of the collector
-          davinciClient.update(collector), // Returns an update function for this collector
+          formEl,
+          collector,
+          davinciClient.update(collector),
         );
       } else if (collector.type === 'SubmitCollector') {
         submitButtonComponent(
-          formEl, // You can ignore this; it's just for rendering
-          collector, // This is the plain object of the collector
+          formEl,
+          collector,
         );
-      } else if (collector.type === 'SocialLoginCollector') {
-        socialLoginButtonComponent(formEl, collector);
       } else if (collector.type === 'FlowCollector') {
         flowLinkComponent(
-          formEl, // You can ignore this; it's just for rendering
-          collector, // This is the plain object of the collector
-          davinciClient.flow({
-            // Returns a function to call the flow from within component
-            action: collector.output.key,
-          }),
-          renderForm, // Ignore this; it's just for re-rendering the form
+          formEl,
+          collector,
+          davinciClient.flow({ action: collector.output.key}),
+          renderForm,
         );
       }
     });
-
-    if (davinciClient.getCollectors().find((collector) => collector.name === 'protectsdk')) {
-      const newNode = await davinciClient.next();
-
-      if (newNode.status === 'next') {
-        renderForm();
-      } else if (newNode.status === 'success') {
-        renderComplete();
-      } else if (newNode.status === 'error') {
-        renderError();
-      } else {
-        console.error('Unknown node status', newNode);
-      }
-    }
   }
 
-  /**
-   * Optionally subscribe to the store to listen for all store updates
-   * This is useful for debugging and logging
-   * It returns an unsubscribe function that you can call to stop listening
-   */
-  davinciClient.subscribe(() => {
-    const node = davinciClient.getClientInfo();
-    console.log('Event emitted from store:', node);
-  });
+  function mapRenderer(nextNode) {
+    if (nextNode.status === 'next') {
+      renderForm();
+    } else if (nextNode.status === 'success') {
+      renderComplete();
+    } else if (nextNode.status === 'error') {
+      renderError();
+    } else {
+      console.error('Unknown node status', nextNode);
+    }
+  }
 
   const node = await davinciClient.start();
 
   formEl.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    /**
-     * We can just call `next` here and not worry about passing any arguments
-     */
     const newNode = await davinciClient.next();
 
-    /**
-     * Recursively render the form with the new state
-     */
-    if (newNode.status === 'next') {
-      renderForm();
-    } else if (newNode.status === 'success') {
-      renderComplete();
-    } else if (newNode.status === 'error') {
-      renderError();
-    } else {
-      console.error('Unknown node status', newNode);
-    }
+    mapRenderer(newNode);
   });
 
-  if (node.status !== 'success') {
-    renderForm();
-  } else {
-    renderComplete();
-  }
+  mapRenderer(node);
 })();
