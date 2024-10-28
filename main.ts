@@ -1,7 +1,6 @@
 import './style.css';
 
-import { Config, FRUser, TokenManager } from '@forgerock/javascript-sdk';
-import davinci from '@forgerock/davinci-client';
+// Add import statements here
 
 import usernameComponent from './components/text.js';
 import passwordComponent from './components/password.js';
@@ -9,44 +8,25 @@ import submitButtonComponent from './components/submit-button.js';
 import protect from './components/protect.js';
 import flowLinkComponent from './components/flow-link.js';
 
-const config = {
-  clientId: '724ec718-c41c-4d51-98b0-84a583f450f9',
-  redirectUri: window.location.href,
-  scope: 'openid profile email name revoke',
-  serverConfig: {
-    baseUrl: 'https://auth.pingone.ca/02fb4743-189a-4bc7-9d6c-a919edfe6447/',
-    wellknown:
-      'https://auth.pingone.ca/02fb4743-189a-4bc7-9d6c-a919edfe6447/as/.well-known/openid-configuration',
-  },
-};
+// Tutorial: Add configuration object here
 
 (async () => {
   const formEl = document.getElementById('form') as HTMLFormElement;
 
-  const davinciClient = await davinci({ config });
-  await Config.setAsync(config);
+  // Tutorial: Add the DaVinci Client initialization function
 
-  davinciClient.subscribe(() => {
-    const node = davinciClient.getClient();
-    console.log('Event emitted from store:', node);
-  });
+  // Tutorial: Add the JavaScript SDK config method here
+
+  // Tutorial: Add the store subscription here
 
   function renderComplete() {
-    const clientInfo = davinciClient.getClient();
-    const serverInfo = davinciClient.getServer();
+    // Tutorial: Add the get methods for client and server info here
 
     let code = '';
     let session = '';
     let state = '';
 
-    if (clientInfo?.status === 'success') {
-      code = clientInfo.authorization?.code || '';
-      state = clientInfo.authorization?.state || '';
-    }
-
-    if (serverInfo && serverInfo.status === 'success') {
-      session = serverInfo.session || '';
-    }
+    // Tutorial: Add the conditionals here for retrieving the code, session, and state
 
     let tokens;
 
@@ -67,7 +47,7 @@ const config = {
 
     const tokenBtn = document.getElementById('tokensButton') as HTMLButtonElement;
     tokenBtn.addEventListener('click', async () => {
-      tokens = await TokenManager.getTokens({ query: { code, state } });
+      // Tutorial: Add the get method here for retrieving the tokens
 
       console.log(tokens);
 
@@ -77,14 +57,14 @@ const config = {
 
     const loginBtn = document.getElementById('logoutButton') as HTMLButtonElement;
     loginBtn.addEventListener('click', async () => {
-      await FRUser.logout({ logoutRedirectUri: window.location.href });
+      // Tutorial: Add the logout method here
 
       window.location.reload();
     });
   }
 
   function renderError() {
-    const error = davinciClient.getError();
+    // Tutorial: Add the get method here for retrieving the error
 
     formEl.innerHTML = `
       <h2>Error</h2>
@@ -96,11 +76,9 @@ const config = {
     formEl.innerHTML = '';
     let formName = '';
 
-    const clientInfo = davinciClient.getClient();
+    // Tutorial: Add the get methods for client here
 
-    if (clientInfo?.status === 'next') {
-      formName = clientInfo.name || '';
-    }
+    // Tutorial: Add formName assignment here
 
     const header = document.createElement('h2');
     header.innerText = formName || '';
@@ -112,19 +90,19 @@ const config = {
         protect(
           formEl,
           collector,
-          davinciClient.update(collector),
+          // Tutorial: Add updater method here
         );
       } else if (collector.type === 'TextCollector') {
         usernameComponent(
           formEl,
           collector,
-          davinciClient.update(collector),
+          // Tutorial: Add updater method here
         );
       } else if (collector.type === 'PasswordCollector') {
         passwordComponent(
           formEl,
           collector,
-          davinciClient.update(collector),
+          // Tutorial: Add updater method here
         );
       } else if (collector.type === 'SubmitCollector') {
         submitButtonComponent(
@@ -135,34 +113,26 @@ const config = {
         flowLinkComponent(
           formEl,
           collector,
-          davinciClient.flow({ action: collector.output.key}),
+          // Tutorial: Add flow method here
           renderForm,
         );
       }
     });
   }
 
-  function mapRenderer(nextNode) {
-    if (nextNode.status === 'next') {
-      renderForm();
-    } else if (nextNode.status === 'success') {
-      renderComplete();
-    } else if (nextNode.status === 'error') {
-      renderError();
-    } else {
-      console.error('Unknown node status', nextNode);
-    }
+  function mapRenderer(node) {
+    // Tutorial: Add conditionals here for the node status
   }
-
-  const node = await davinciClient.start();
 
   formEl.addEventListener('submit', async (event) => {
     event.preventDefault();
 
-    const newNode = await davinciClient.next();
+    // Tutorial: Add DaVinci next method here
 
-    mapRenderer(newNode);
+    // Tutorial: Call `mapRenderer` method here
   });
 
-  mapRenderer(node);
+  // Tutorial: Add DaVinci Client start method here
+
+  // Tutorial: Call `mapRenderer` method here
 })();
